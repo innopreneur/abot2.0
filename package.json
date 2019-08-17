@@ -1,0 +1,41 @@
+{
+  "name": "uniswap-watchdog",
+  "version": "0.0.1",
+  "description": "Watcher script to poll current prices",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build && node dist/index",
+    "build": "npm run copy  && babel --presets es2015 ./src -d ./dist -s",
+    "copy": "babel src/api/exchanges-d/uniswap/abi --out-dir dist/api/exchanges-d/uniswap/abi --copy-files",
+    "bignum": "npm run build && node dist/temp/bignum.js"
+  },
+  "author": "Manan Patel (innoprenuer)",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^3.1.0",
+    "bignumber.js": "^9.0.0",
+    "bittrex-signalr-client": "^1.1.9",
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^8.0.0",
+    "ethereumjs-tx": "^2.0.0",
+    "lodash": "^4.17.15",
+    "mongoose": "^5.6.4",
+    "node-fetch": "^2.6.0",
+    "nodemailer": "^6.2.1",
+    "path": "^0.12.7",
+    "redux": "^4.0.1",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "sha1": "^1.1.1",
+    "web3": "^1.0.0-beta.55",
+    "ws": "^7.1.2"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-dotenv": "^0.1.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1"
+  }
+}
