@@ -1,8 +1,12 @@
 import { default as WebSocket} from 'ws';
 import { default as fetch } from 'node-fetch';
-import { WAIT_TO_RECONNECT } from 'babel-dotenv';
+import { WAIT_TO_RECONNECT, BINANCE_SECRET } from 'babel-dotenv';
 import { binance } from '../../actions';
 import { wait } from '../../utils/helper';
+import { HmacSHA256 } from 'crypto-js';
+import {default as queryString} from 'querystring';
+
+
 
 const { updateBuyOrder, updateSellOrder, initializeOrderbook, initializeStreams } = binance;
 
@@ -11,14 +15,19 @@ let BASE_URL = 'https://www.binance.com/api/v1';
 
 export default class Binance {
 
-    constructor(store) {
+    constructor(store, pairs = null) {
         this.store = store;
         this.initiated = false;
+        this.pairs = pairs;
+    }
+
+    setPairs(pairs){
+        this.pairs = pairs;
     }
 
     async start(){
         try {
-        let pairs = await this.getPairs();
+        let pairs = this.pairs || await this.getPairs();
         //scan for ETH only pairs
         let ethOnlyPairs = await Promise.all(pairs.filter(pair => pair.includes('eth')));
         console.log(ethOnlyPairs)
@@ -151,5 +160,27 @@ export default class Binance {
         }
         o[order[0]] = order[1];
         return o;
+    }
+
+    async placeOrder(){
+
+        let params = {}; //TODO
+        let query = querystring.encode(params);
+        let signature = HmacSHA256(query, BINANCE_SECRET);
+        let payload = queryString.encode({...params, signature});
+
+        let url = 'https://www.binance.com/api/v3/order/test';
+
+        let response = await fetch(
+            url, 
+            { 
+                method: 'POST', 
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' } 
+            });
+
+        let resp = await response.json();
+        return resp;
+        
     }
 }
