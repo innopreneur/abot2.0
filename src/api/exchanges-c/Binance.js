@@ -1,8 +1,10 @@
 import { default as WebSocket} from 'ws';
 import { default as fetch } from 'node-fetch';
+import { WAIT_TO_RECONNECT } from 'babel-dotenv';
 import { binance } from '../../actions';
+import { wait } from '../../utils/helper';
 
-const { removeBuyOrder, updateBuyOrder, removeSellOrder, updateSellOrder, initializeOrderbook, initializeStreams } = binance;
+const { updateBuyOrder, updateSellOrder, initializeOrderbook, initializeStreams } = binance;
 
 
 let BASE_URL = 'https://www.binance.com/api/v1';
@@ -31,8 +33,8 @@ export default class Binance {
             }
             
         }));
-        ethOnlyPairs = ['ethbtc']//TODO
-        streams= 'ethbtc@depth'
+        //ethOnlyPairs = ['ethbtc']//TODO
+        //streams= 'ethbtc@depth'
         //set it to instance variable
         this.pairs = ethOnlyPairs.slice();
         this.wss = new WebSocket(`wss://stream.binance.com:9443/ws/${streams}`);
@@ -55,10 +57,18 @@ export default class Binance {
     }
 
     async getOrderbook(symbol){
-        let url = `${BASE_URL}/depth?symbol=${symbol}&limit=10`;
-        let response = await fetch(url);
-        let resp = await response.json();
-        return resp;
+        try{
+            let url = `${BASE_URL}/depth?symbol=${symbol}&limit=10`;
+            let response = await fetch(url);
+            let resp = await response.json();
+            return resp;
+        } catch(err){
+            //if connection refused, wait for 10 seconds and try again
+            if(err.message.includes('ECONNREFUSED')){
+                wait(WAIT_TO_RECONNECT);
+                this.startStreaming();
+            }
+        }
     }
 
     subscribeToEvents(){
@@ -95,19 +105,6 @@ export default class Binance {
                     let order = Object.assign({}, ..._orders);
                     console.log(`UPDATE BUY - ${stream}-${u}-${JSON.stringify(order)}`)
                     this.store.dispatch(updateBuyOrder({stream, u, order}));
-                    /*b.map(_order => {
-                        let order = {};
-                        order[_order[0]] = _order[1];
-
-                        if(Number(_order[1]) > 0){
-                            console.log(`UPDATE BUY - ${stream}-${u}-${JSON.stringify(order)}`)
-                            this.store.dispatch(updateBuyOrder({stream, u, order}));
-                        }
-                        else {
-                            console.log(`REMOVE BUY - ${stream}-${u}-${JSON.stringify(order)}`)
-                            this.store.dispatch(removeBuyOrder({stream, u, order}));
-                        }
-                    })*/
                 }
 
                 //check if there are any asks
@@ -116,19 +113,6 @@ export default class Binance {
                     let order = Object.assign({}, ..._orders);
                     console.log(`UPDATE SELL - ${stream}-${u}-${JSON.stringify(order)}`)
                     this.store.dispatch(updateSellOrder({stream, u, order}));
-                    /*a.map(_order => {
-                        let order = {};
-                        order[_order[0]] = _order[1];
-                        
-                        if(Number(_order[1]) > 0){
-                            console.log(`UPDATE SELL - ${stream}-${u}-${JSON.stringify(order)}`)
-                            this.store.dispatch(updateSellOrder({stream, u, order}));
-                        }
-                        else {
-                            console.log(`REMOVE SELL - ${stream}-${u}-${JSON.stringify(order)}`)
-                            this.store.dispatch(removeSellOrder({stream, u, order}));
-                        }
-                    })*/
                 }
             }
         }
