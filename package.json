@@ -15,6 +15,7 @@
   "dependencies": {
     "@auroradao/datastream-client": "^1.8.3",
     "@auroradao/datastream-connector-uws": "^1.8.0",
+    "app-root-path": "^3.0.0",
     "async": "^3.1.0",
     "bignumber.js": "^9.0.0",
     "bittrex-signalr-client": "^1.1.9",
